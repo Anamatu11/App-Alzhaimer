@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "979048663408",
+    "project_id": "axis-app-6ee11",
+    "storage_bucket": "axis-app-6ee11.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:979048663408:android:00d4b05cbe811ff76f67b5",
+        "android_client_info": {
+          "package_name": "com.example.parche_iot_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJKEz8a7gwnZxkmseqIdJs_zwO2QWym4w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
