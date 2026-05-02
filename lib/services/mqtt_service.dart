@@ -5,7 +5,7 @@ import 'package:mqtt_client/mqtt_server_client.dart';
 
 class MqttService {
   late MqttServerClient client;
-  Function(Map<String, dynamic>)? onData;
+  Function(dynamic)? onData;
 
   bool _isConnecting = false;
 
@@ -33,8 +33,7 @@ class MqttService {
       print('🔌 Conectando a MQTT con ID: $clientId');
       await client.connect();
 
-      if (client.connectionStatus!.state ==
-          MqttConnectionState.connected) {
+      if (client.connectionStatus!.state == MqttConnectionState.connected) {
         print('✅ Conectado a MQTT');
         _isConnecting = false;
 
@@ -52,37 +51,19 @@ class MqttService {
     }
   }
 
-  void _onMessageReceived(
-      List<MqttReceivedMessage<MqttMessage>> events) {
+  void _onMessageReceived(List<MqttReceivedMessage<MqttMessage>> events) {
     final recMess = events[0].payload as MqttPublishMessage;
 
-    final payload = MqttPublishPayload.bytesToStringAsString(
-        recMess.payload.message);
+    final payload =
+        MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
 
     print("📨 Mensaje recibido: $payload");
 
     try {
-      final rawData = jsonDecode(payload);
+      final rawData = jsonDecode(payload) as Map<String, dynamic>;
 
-      /// 🔥 CORRECCIÓN REAL
-      int pulso = int.tryParse(rawData['pulso'].toString()) ?? 0;
-      int spo2 = int.tryParse(rawData['spo2'].toString()) ?? 0;
-
-      /// 🔒 FILTROS
-      if (pulso > 220) pulso = 0;
-      if (spo2 > 100) spo2 = 0;
-
-      final processedData = {
-        'pulso': pulso,
-        'spo2': spo2,
-        'dedo': rawData['dedo'] ?? false,
-
-        'lat': rawData['lat'] ?? 0.0,
-        'lng': rawData['lng'] ?? 0.0,
-        'satellites': rawData['satellites'] ?? 0,
-      };
-
-      onData?.call(processedData);
+      // Enviar el JSON tal cual a la pantalla para que ella haga los cálculos
+      onData?.call(rawData);
     } catch (e) {
       print("❌ Error JSON: $e");
     }
@@ -99,7 +80,6 @@ class MqttService {
   }
 
   bool isConnected() {
-    return client.connectionStatus?.state ==
-        MqttConnectionState.connected;
+    return client.connectionStatus?.state == MqttConnectionState.connected;
   }
 }
