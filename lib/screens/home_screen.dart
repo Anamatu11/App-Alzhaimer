@@ -32,8 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int desorientacion = 30;
 
-  List<int> _irBuffer = [];
-  List<int> _redBuffer = [];
+  final List<int> _irBuffer = [];
+  final List<int> _redBuffer = [];
   int _fallTimer = 0;
 
   @override
@@ -432,7 +432,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(15),
                     child: FlutterMap(
                       mapController: _mapController,
-                      options: MapOptions(
+                      options: const MapOptions(
                         initialCenter: LatLng(4.6097, -74.0817),
                         initialZoom: 13,
                       ),
