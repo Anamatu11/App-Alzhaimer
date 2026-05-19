@@ -15,9 +15,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final mqttService = MqttService();
-
-  // ✅ MAPA - Controlador para mover el mapa en tiempo real
   final MapController _mapController = MapController();
+
+  int _selectedIndex = 0;
 
   int pulso = 0;
   int spo2 = 0;
@@ -29,8 +29,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String direccion = "Cargando...";
   String ubicacion = "En casa";
   String actividad = "Movimiento";
-
-  int desorientacion = 30;
 
   final List<int> _irBuffer = [];
   final List<int> _redBuffer = [];
@@ -227,77 +225,262 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Color _colorPulso() {
-    if (pulso < 60) return Colors.blue;
+    if (pulso < 60) return const Color(0xFF1A237E);
     if (pulso < 100) return Colors.green;
-    return Colors.red;
-  }
-
-  String _getDesorientacionLevel() {
-    if (desorientacion < 30) return "Baja";
-    if (desorientacion < 60) return "Media";
-    return "Alta";
-  }
-
-  Color _getDesorientacionColor() {
-    if (desorientacion < 30) return Colors.green;
-    if (desorientacion < 60) return Colors.orange;
     return Colors.red;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Parche IoT"),
+        backgroundColor: Colors.white,
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/transparente.png',
+              height: 50,
+            ),
+            const SizedBox(width: 12),
+            Image.asset(
+              'assets/logoAxis.png',
+              height: 32,
+            ),
+          ],
+        ),
         elevation: 0,
+        actions: [
+          Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.green,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text(
+              "Estable",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                /// 👤 USUARIO
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 40,
-                        backgroundColor: Colors.grey[300],
-                        child: const Icon(Icons.person, size: 40),
+      body: _selectedIndex == 0
+          ? _buildInicioScreen()
+          : _selectedIndex == 1
+              ? _buildAlertasScreen()
+              : _buildAjustesScreen(),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home, color: Color(0xFF1A237E)),
+            label: 'Inicio',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications, color: Color(0xFF1A237E)),
+            label: 'Alertas',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings, color: Color(0xFF1A237E)),
+            label: 'Ajustes',
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 🏠 PANTALLA DE INICIO
+  Widget _buildInicioScreen() {
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// 👤 USUARIO
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Colors.grey[300],
+                      backgroundImage: const AssetImage('assets/juanperez.jpg'),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Juan Pérez",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            "Paciente",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Juan Pérez",
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              /// ❤️ SIGNOS VITALES
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                elevation: 3,
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                "Signos Vitales",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1A237E).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              "En tiempo real",
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 12,
+                                color: Color(0xFF1A237E),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.green,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Text(
-                                "Estable",
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.favorite,
+                                  color: const Color(0xFF1A237E),
+                                  size: 40,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  (pulso > 0) ? "$pulso" : "--",
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: _colorPulso(),
+                                  ),
+                                ),
+                                const Text("BPM",
+                                    style: TextStyle(color: Colors.grey, fontSize: 10)),
+                                const SizedBox(height: 8),
+                                const Text("Ritmo Cardíaco",
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+                              ],
+                            ),
+                          ),
+                          Container(
+                              width: 1, height: 100, color: Colors.grey[300]),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.water_drop,
+                                  color: const Color(0xFF1A237E),
+                                  size: 40,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  (spo2 > 0) ? "$spo2" : "--",
+                                  style: const TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1A237E),
+                                  ),
+                                ),
+                                const Text("% SpO₂",
+                                    style: TextStyle(color: Colors.grey, fontSize: 10)),
+                                const SizedBox(height: 8),
+                                const Text("Oxígeno en Sangre",
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A237E).withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFF1A237E).withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info, color: const Color(0xFF1A237E).withOpacity(0.7), size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                dedo
+                                    ? "Midiendo correctamente"
+                                    : "Lectura inestable — coloca el dedo en el sensor",
                                 style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: const Color(0xFF1A237E).withOpacity(0.7),
                                 ),
                               ),
                             ),
@@ -307,233 +490,220 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
+              ),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-                /// ❤️ SIGNOS VITALES
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  elevation: 3,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Signos Vitales",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Text(
-                          "Sensor MAX30102",
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  Text(
-                                    (pulso > 0) ? "$pulso" : "--",
-                                    style: TextStyle(
-                                      fontSize: 40,
-                                      fontWeight: FontWeight.bold,
-                                      color: _colorPulso(),
-                                    ),
-                                  ),
-                                  const Text("BPM",
-                                      style: TextStyle(color: Colors.grey)),
-                                  const SizedBox(height: 8),
-                                  const Text("Ritmo Cardíaco"),
-                                ],
-                              ),
-                            ),
-                            Container(
-                                width: 1, height: 80, color: Colors.grey[300]),
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  Text(
-                                    (spo2 > 0) ? "$spo2" : "--",
-                                    style: const TextStyle(
-                                      fontSize: 40,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-                                  const Text("% SpO₂",
-                                      style: TextStyle(color: Colors.grey)),
-                                  const SizedBox(height: 8),
-                                  const Text("Oxígeno en Sangre"),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          dedo ? "Midiendo correctamente" : "Lectura inestable",
-                          style:
-                              const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
+              /// 📍 UBICACIÓN
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
                 ),
-
-                const SizedBox(height: 20),
-
-                /// 📍 UBICACIÓN
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  elevation: 3,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.home, color: Colors.green, size: 28),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                ubicacion,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                direccion,
-                                style: const TextStyle(
-                                    fontSize: 12, color: Colors.grey),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
+                elevation: 3,
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Ubicación",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // ✅ MAPA - Widget del mapa en tiempo real
-                SizedBox(
-                  height: 250,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: FlutterMap(
-                      mapController: _mapController,
-                      options: const MapOptions(
-                        initialCenter: LatLng(4.6097, -74.0817),
-                        initialZoom: 13,
                       ),
-                      children: [
-                        TileLayer(
-                          urlTemplate:
-                              "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                          userAgentPackageName: "com.example.parche_iot_app",
+                      const Text(
+                        "Última actualización: ahora",
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
                         ),
-                        MarkerLayer(
-                          markers: [
-                            Marker(
-                              point: LatLng(lat, lng),
-                              width: 80,
-                              height: 80,
-                              child: const Icon(
-                                Icons.location_on,
-                                color: Colors.red,
-                                size: 40,
-                              ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Icon(Icons.home, color: Color(0xFF1A237E), size: 28),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  ubicacion,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                Text(
+                                  direccion,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                /// 🚶 MOVIMIENTO
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  elevation: 3,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[100],
-                            borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(Icons.directions_walk,
-                              color: Colors.blue),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          actividad,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
+              ),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-                /// 🧠 ANÁLISIS COGNITIVO
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  elevation: 3,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Análisis Cognitivo",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          "Desorientación: ${_getDesorientacionLevel()}",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: _getDesorientacionColor(),
+              // ✅ MAPA
+              SizedBox(
+                height: 220,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: FlutterMap(
+                    mapController: _mapController,
+                    options: const MapOptions(
+                      initialCenter: LatLng(4.6097, -74.0817),
+                      initialZoom: 13,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        userAgentPackageName: "com.example.parche_iot_app",
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: LatLng(lat, lng),
+                            width: 80,
+                            height: 80,
+                            child: const Icon(
+                              Icons.location_on,
+                              color: Colors.red,
+                              size: 40,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        LinearProgressIndicator(
-                          value: desorientacion / 100,
-                          minHeight: 8,
-                          backgroundColor: Colors.grey[300],
-                          valueColor:
-                              AlwaysStoppedAnimation(_getDesorientacionColor()),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+
+              const SizedBox(height: 20),
+
+              /// 🚶 ACTIVIDAD
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                elevation: 3,
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.directions_run,
+                              color: Color(0xFF1A237E), size: 24),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              "Actividad",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        actividad,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+            ],
           ),
         ),
       ),
     );
   }
+
+  // 🔔 PANTALLA DE ALERTAS
+  Widget _buildAlertasScreen() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.notifications_none,
+            size: 80,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "Alertas",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Aquí aparecerán los alertas del modelo de IA",
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[500],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ⚙️ PANTALLA DE AJUSTES
+  Widget _buildAjustesScreen() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.settings_outlined,
+            size: 80,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "Ajustes",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Próximamente: Información del paciente y cuidadores",
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[500],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }

@@ -33,6 +33,7 @@ flutter:
     - assets/logo.png
     - assets/logoAxis.png
     - assets/transparente.png
+    - assets/juanperez.jpg
 
 
 flutter_launcher_icons:
