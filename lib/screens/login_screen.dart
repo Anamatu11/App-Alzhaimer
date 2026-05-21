@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -44,6 +45,32 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _createUserDocumentIfNotExists(User user) async {
+    try {
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      final userDoc = firestore.collection('usuarios').doc(user.uid);
+      
+      // Verificar si el documento existe
+      final docSnapshot = await userDoc.get();
+      
+      if (!docSnapshot.exists) {
+        // Crear documento con datos iniciales
+        await userDoc.set({
+          'uid': user.uid,
+          'email': user.email,
+          'nombre': user.displayName ?? 'Usuario',
+          'fotoUrl': '',
+          'cuidadores': [],
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      print('Error creando documento de usuario: $e');
+      // No detener el login si hay error creando el documento
+    }
+  }
+
   Future<void> login() async {
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
@@ -54,10 +81,13 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // Crear documento de usuario en Firestore si no existe
+      await _createUserDocumentIfNotExists(userCredential.user!);
 
       if (mounted) {
         Navigator.pushReplacement(

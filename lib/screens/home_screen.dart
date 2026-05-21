@@ -6,6 +6,9 @@ import 'package:geocoding/geocoding.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+// ✅ PERFIL - Pantalla de perfil
+import 'profile_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -673,37 +676,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ⚙️ PANTALLA DE AJUSTES
+  // ⚙️ PANTALLA DE AJUSTES / PERFIL
   Widget _buildAjustesScreen() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.settings_outlined,
-            size: 80,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            "Ajustes",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Próximamente: Información del paciente y cuidadores",
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
-          ),
-        ],
-      ),
-    );
+    return const ProfileScreen();
   }
 
 }
