@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/auth_service.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -15,6 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _passwordFocusNode = FocusNode();
+  final AuthService _authService = AuthService();
 
   String errorMessage = "";
   bool isLoading = false;
@@ -45,31 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _createUserDocumentIfNotExists(User user) async {
-    try {
-      final FirebaseFirestore firestore = FirebaseFirestore.instance;
-      final userDoc = firestore.collection('usuarios').doc(user.uid);
-      
-      // Verificar si el documento existe
-      final docSnapshot = await userDoc.get();
-      
-      if (!docSnapshot.exists) {
-        // Crear documento con datos iniciales
-        await userDoc.set({
-          'uid': user.uid,
-          'email': user.email,
-          'nombre': user.displayName ?? 'Usuario',
-          'fotoUrl': '',
-          'cuidadores': [],
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      }
-    } catch (e) {
-      print('Error creando documento de usuario: $e');
-      // No detener el login si hay error creando el documento
-    }
-  }
+
 
   Future<void> login() async {
     String email = emailController.text.trim();
@@ -81,44 +57,38 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      // Usar el servicio de autenticación seguro
+      final result = await _authService.login(email, password);
 
-      // Crear documento de usuario en Firestore si no existe
-      await _createUserDocumentIfNotExists(userCredential.user!);
+      if (!mounted) return;
 
-      if (mounted) {
+      if (result['success']) {
+        // Login exitoso
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => const HomeScreen(),
           ),
         );
+      } else {
+        // Mostrar mensaje de error seguro
+        setState(() {
+          errorMessage = result['message'] ?? "Credenciales inválidas. Verifica tus datos e intenta nuevamente.";
+        });
       }
-    } on FirebaseAuthException catch (e) {
-      setState(() {
-        if (e.code == 'user-not-found') {
-          errorMessage = "Usuario no encontrado";
-        } else if (e.code == 'wrong-password') {
-          errorMessage = "Contraseña incorrecta";
-        } else if (e.code == 'invalid-email') {
-          errorMessage = "Correo inválido";
-        } else {
-          errorMessage = e.message ?? "Error desconocido";
-        }
-      });
     } catch (e) {
-      setState(() {
-        errorMessage = "Error inesperado";
-      });
-    }
-
-    if (mounted) {
-      setState(() {
-        isLoading = false;
-      });
+      // Error inesperado
+      if (mounted) {
+        setState(() {
+          errorMessage = "Ocurrió un error inesperado. Inténtalo más tarde.";
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -466,21 +436,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
             // ✅ FOOTER FIJO fuera del scroll — siempre visible pero no tapa los campos
             SizedBox(
-              height: 100,
+              height: 140,
               width: double.infinity,
               child: Stack(
                 alignment: Alignment.bottomCenter,
                 children: [
                   CustomPaint(
-                    size: const Size(double.infinity, 100),
+                    size: const Size(double.infinity, 140),
                     painter: WavePainter(),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Text(
-                      "By Ana Tulande y Erick Muñoz",
+                    "By Ana Maria Tulande Chantre y Erick Santiago Muñoz Daza\nsoporteaxis@gmail.com",
+                    textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 10,
                         fontWeight: FontWeight.w400,
                         color: Colors.white.withOpacity(0.9),
                         letterSpacing: 0.2,

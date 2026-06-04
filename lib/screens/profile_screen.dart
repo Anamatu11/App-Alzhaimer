@@ -73,28 +73,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     if (userData != null) {
-      print('📱 DEBUG: Datos del paciente: $userData');
+      final Map<String, dynamic> data = userData;
+      print('📱 DEBUG: Datos del paciente: $data');
       print(
-          '📱 DEBUG: Cuidadores encontrados: ${userData['cuidadores']}');
+          '📱 DEBUG: Cuidadores encontrados: ${data['cuidadores']}');
 
       setState(() {
         currentUserName =
-            userData!['nombre'] ?? 'Paciente';
+            data['nombre'] ?? 'Paciente';
 
         profileImageUrl =
-            userData!['fotoUrl'] ?? '';
+            data['fotoUrl'] ?? '';
 
-        if (userData!['cuidadores'] != null &&
-            userData!['cuidadores'] is List &&
-            (userData!['cuidadores'] as List)
+        if (data['cuidadores'] != null &&
+            data['cuidadores'] is List &&
+            (data['cuidadores'] as List)
                 .isNotEmpty) {
 
           print(
-              '📱 DEBUG: Cuidadores detectados, cantidad: ${(userData!['cuidadores'] as List).length}');
+              '📱 DEBUG: Cuidadores detectados, cantidad: ${(data['cuidadores'] as List).length}');
 
           cuidadores =
               List<Map<String, dynamic>>.from(
-            (userData!['cuidadores'] as List)
+            (data['cuidadores'] as List)
                 .map((c) {
               return {
                 'nombre': c['nombre'] ?? '',
