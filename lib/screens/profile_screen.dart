@@ -33,74 +33,163 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadProfileData() async {
-    try {
-      setState(() {
-        isLoading = true;
-        errorMessage = '';
-      });
+  try {
+    setState(() {
+      isLoading = true;
+      errorMessage = '';
+    });
 
-      User? currentUser = _auth.currentUser;
-      if (currentUser == null) return;
+    User? currentUser = _auth.currentUser;
+    if (currentUser == null) return;
 
-      // Obtener datos del usuario desde Firestore
-      DocumentSnapshot userDoc =
-          await _firestore.collection('usuarios').doc(currentUser.uid).get();
+    final String? emailUsuario = currentUser.email;
 
-      if (userDoc.exists) {
-        Map<String, dynamic> userData =
-            userDoc.data() as Map<String, dynamic>;
+    // Buscar el paciente asociado al correo del cuidador
+    QuerySnapshot pacientesSnapshot =
+        await _firestore.collection('usuarios').get();
 
-        print('📱 DEBUG: Datos del usuario: $userData');
-        print('📱 DEBUG: Cuidadores encontrados: ${userData['cuidadores']}');
+    Map<String, dynamic>? userData;
 
-        setState(() {
-          currentUserName = userData['nombre'] ?? 'Usuario';
-          profileImageUrl = userData['fotoUrl'] ?? '';
+    for (var doc in pacientesSnapshot.docs) {
+      Map<String, dynamic> data =
+          doc.data() as Map<String, dynamic>;
 
-          // Convertir cuidadores a lista
-          if (userData['cuidadores'] != null &&
-              userData['cuidadores'] is List &&
-              (userData['cuidadores'] as List).isNotEmpty) {
-            print(
-                '📱 DEBUG: Cuidadores detectados, cantidad: ${(userData['cuidadores'] as List).length}');
-            cuidadores = List<Map<String, dynamic>>.from(
-              (userData['cuidadores'] as List).map((c) {
-                print('📱 DEBUG: Procesando cuidador: $c');
-                return {
-                  'nombre': c['nombre'] ?? '',
-                  'parentesco': c['parentesco'] ?? '',
-                  'celular': c['celular'] ?? '',
-                };
-              }),
-            );
-            print('📱 DEBUG: Cuidadores procesados: $cuidadores');
-          } else {
-            print('📱 DEBUG: No hay cuidadores o campo vacío');
-            cuidadores = [];
-          }
+      if (data['cuidadores'] != null &&
+          data['cuidadores'] is List) {
+
+        List<dynamic> listaCuidadores =
+            data['cuidadores'];
+
+        bool tieneAcceso =
+            listaCuidadores.any((cuidador) {
+          return cuidador['correo'] == emailUsuario;
         });
-      } else {
-        print('📱 DEBUG: Documento de usuario NO existe');
-        setState(() {
-          currentUserName = currentUser.email ?? 'Usuario';
-          profileImageUrl = '';
-          cuidadores = [];
-          errorMessage =
-              'Documento de usuario no encontrado. Verifica que el documento exista en Firestore.';
-        });
+
+        if (tieneAcceso) {
+          userData = data;
+          break;
+        }
       }
-    } catch (e) {
-      print('❌ ERROR cargando datos: $e');
+    }
+
+    if (userData != null) {
+      print('📱 DEBUG: Datos del paciente: $userData');
+      print(
+          '📱 DEBUG: Cuidadores encontrados: ${userData['cuidadores']}');
+
       setState(() {
-        errorMessage = 'Error al cargar datos: ${e.toString()}';
+        currentUserName =
+            userData!['nombre'] ?? 'Paciente';
+
+        profileImageUrl =
+            userData!['fotoUrl'] ?? '';
+
+        if (userData!['cuidadores'] != null &&
+            userData!['cuidadores'] is List &&
+            (userData!['cuidadores'] as List)
+                .isNotEmpty) {
+
+          print(
+              '📱 DEBUG: Cuidadores detectados, cantidad: ${(userData!['cuidadores'] as List).length}');
+
+          cuidadores =
+              List<Map<String, dynamic>>.from(
+            (userData!['cuidadores'] as List)
+                .map((c) {
+              return {
+                'nombre': c['nombre'] ?? '',
+                'parentesco':
+                    c['parentesco'] ?? '',
+                'celular':
+                    c['celular'] ?? '',
+              };
+            }),
+          );
+
+          print(
+              '📱 DEBUG: Cuidadores procesados: $cuidadores');
+
+        } else {
+          print(
+              '📱 DEBUG: No hay cuidadores o campo vacío');
+
+          cuidadores = [];
+        }
       });
-    } finally {
+
+    } else {
+
+      print(
+          '📱 DEBUG: No se encontró paciente asociado al correo');
+
       setState(() {
-        isLoading = false;
+        currentUserName =
+            currentUser.email ?? 'Usuario';
+
+        profileImageUrl = '';
+        cuidadores = [];
+
+        errorMessage =
+            'No existe ningún paciente asociado a este cuidador.';
       });
     }
-  }
 
+  } catch (e) {
+
+    print('❌ ERROR cargando datos: $e');
+
+    setState(() {
+      errorMessage =
+          'Error al cargar datos: ${e.toString()}';
+    });
+
+  } finally {
+
+    setState(() {
+      isLoading = false;
+    });
+
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   Future<void> _pickAndUploadImage() async {
     try {
       final XFile? pickedFile =

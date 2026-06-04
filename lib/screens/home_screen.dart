@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/mqtt_service.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // ✅ MAPA - Dependencias necesarias
 import 'package:flutter_map/flutter_map.dart';
@@ -19,7 +21,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final mqttService = MqttService();
   final MapController _mapController = MapController();
-
+  String nombrePaciente = "Paciente";
   int _selectedIndex = 0;
 
   int pulso = 0;
@@ -41,12 +43,53 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
+    _cargarNombrePaciente();
+
     mqttService.onData = (data) async {
       _procesarDatosMqtt(data);
     };
 
     mqttService.connect();
   }
+Future<void> _cargarNombrePaciente() async {
+  try {
+    final correo = FirebaseAuth.instance.currentUser?.email;
+
+    if (correo == null) return;
+
+    final snapshot =
+        await FirebaseFirestore.instance.collection('usuarios').get();
+
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+
+      if (data['cuidadores'] != null) {
+        List cuidadores = data['cuidadores'];
+
+        bool esCuidador = cuidadores.any(
+          (c) => c['correo'] == correo,
+        );
+
+        if (esCuidador) {
+          setState(() {
+            nombrePaciente = data['nombre'] ?? 'Paciente';
+          });
+          return;
+        }
+      }
+    }
+  } catch (e) {
+    print('Error cargando nombre del paciente: $e');
+  }
+}
+
+
+
+
+
+
+
+
 
   void _procesarDatosMqtt(dynamic data) {
     if (data == null || data is! Map) return;
@@ -338,8 +381,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "Juan Pérez",
+                          Text(
+                            nombrePaciente,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
