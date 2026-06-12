@@ -22,7 +22,17 @@ class _HomeScreenState extends State<HomeScreen> {
   final mqttService = MqttService();
   final MapController _mapController = MapController();
   String nombrePaciente = "Paciente";
+  String pacienteId = "";
+  DateTime? ultimaLecturaGuardada;
   int _selectedIndex = 0;
+
+  double axActual = 0;
+  double ayActual = 0;
+  double azActual = 0;
+
+  double gxActual = 0;
+  double gyActual = 0;
+  double gzActual = 0;
 
   int pulso = 0;
   int spo2 = 0;
@@ -51,6 +61,48 @@ class _HomeScreenState extends State<HomeScreen> {
 
     mqttService.connect();
   }
+////////////////////////////////////////////////////////////
+//// FIREBASE - Cargar nombre del paciente basado en el cuidador actual
+Future<void> guardarLecturaFirebase() async {
+  try {
+    if (ultimaLecturaGuardada != null &&
+        DateTime.now()
+                .difference(ultimaLecturaGuardada!)
+                .inSeconds <
+            30) {
+      return;
+    }
+
+    ultimaLecturaGuardada = DateTime.now();
+
+    await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(pacienteId)
+        .collection('lecturas')
+        .add({
+      'pacienteId': pacienteId,
+      'pacienteNombre': nombrePaciente,
+      'bpm': pulso,
+      'spo2': spo2,
+      'actividad': actividad,
+      'ax': axActual,
+      'ay': ayActual,
+      'az': azActual,
+      'gx': gxActual,
+      'gy': gyActual,
+      'gz': gzActual,
+      'lat': lat,
+      'lng': lng,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    print("✅ Lectura guardada en Firebase");
+  } catch (e) {
+    print("❌ Error guardando lectura: $e");
+  }
+}
+
+//////////////////////////////////////////////////////////
 Future<void> _cargarNombrePaciente() async {
   try {
     final correo = FirebaseAuth.instance.currentUser?.email;
@@ -73,7 +125,9 @@ Future<void> _cargarNombrePaciente() async {
         if (esCuidador) {
           setState(() {
             nombrePaciente = data['nombre'] ?? 'Paciente';
+            pacienteId = doc.id;
           });
+           print("Paciente encontrado: $pacienteId");
           return;
         }
       }
@@ -84,23 +138,22 @@ Future<void> _cargarNombrePaciente() async {
 }
 
 
-
-
-
-
-
-
-
   void _procesarDatosMqtt(dynamic data) {
     if (data == null || data is! Map) return;
 
     try {
-      double ax = double.tryParse(data['ax']?.toString() ?? "0") ?? 0;
-      double ay = double.tryParse(data['ay']?.toString() ?? "0") ?? 0;
-      double az = double.tryParse(data['az']?.toString() ?? "0") ?? 0;
+      axActual = double.tryParse(data['ax']?.toString() ?? "0") ?? 0;
+      ayActual = double.tryParse(data['ay']?.toString() ?? "0") ?? 0;
+      azActual = double.tryParse(data['az']?.toString() ?? "0") ?? 0;
 
-      _calcularPostura(ax, ay, az);
+      _calcularPostura(axActual, ayActual, azActual);
 
+
+      gxActual = double.tryParse(data['gx']?.toString() ?? "0") ?? 0;
+      gyActual = double.tryParse(data['gy']?.toString() ?? "0") ?? 0;
+      gzActual = double.tryParse(data['gz']?.toString() ?? "0") ?? 0;
+
+    
       int ir = int.tryParse(data['ir']?.toString() ?? "0") ?? 0;
       int red = int.tryParse(data['red']?.toString() ?? "0") ?? 0;
 
@@ -192,6 +245,7 @@ Future<void> _cargarNombrePaciente() async {
 
     if (_irBuffer.length == 120) {
       _calcularBpmYSpO2();
+      guardarLecturaFirebase();
     }
   }
 
