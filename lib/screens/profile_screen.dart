@@ -152,44 +152,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   
   Future<void> _pickAndUploadImage() async {
     try {

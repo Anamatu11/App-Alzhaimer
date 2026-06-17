@@ -262,20 +262,26 @@ Future<void> _cargarNombrePaciente() async {
     }
 
     double meanIr = irSuavizado.reduce((a, b) => a + b) / irSuavizado.length;
-    double threshold = meanIr + 50;
+    ///////////// se calcula el umbral dinámico para detección de picos basado en la amplitud de la señal
+    double maxIr = irSuavizado.reduce((a, b) => a > b ? a : b);
+    double minIr = irSuavizado.reduce((a, b) => a < b ? a : b);
+    double amplitud = maxIr - minIr;
+    double threshold = meanIr + (amplitud * 0.25);
 
-    int latidos = 0;
-    bool subiendo = false;
-    for (int i = 0; i < irSuavizado.length; i++) {
-      if (irSuavizado[i] > threshold && !subiendo) {
-        subiendo = true;
+
+   int latidos = 0;
+
+    for (int i = 1; i < irSuavizado.length - 1; i++) {
+      if (irSuavizado[i] > threshold &&
+          irSuavizado[i] > irSuavizado[i - 1] &&
+          irSuavizado[i] > irSuavizado[i + 1]) {
         latidos++;
-      } else if (irSuavizado[i] < meanIr) {
-        subiendo = false;
       }
     }
 
-    int estimadoBpm = latidos * 15;
+    print("Latidos detectados: $latidos");
+
+    int estimadoBpm = latidos * 22;
     if (estimadoBpm > 0 && estimadoBpm < 60) {
       estimadoBpm = (estimadoBpm * 1.5).toInt();
     }
@@ -296,7 +302,8 @@ Future<void> _cargarNombrePaciente() async {
       ratio = (acRed / dcRed) / (acIr / dcIr);
     }
 
-    int estimadoSpO2 = (110 - 25 * ratio).toInt();
+    /////////////////////////
+    int estimadoSpO2 = (104 - (17 * ratio)).round();
     if (estimadoSpO2 > 100) estimadoSpO2 = 100;
     if (estimadoSpO2 < 85 && ratio > 0) {
       estimadoSpO2 = 85 + (estimadoSpO2 % 10);
