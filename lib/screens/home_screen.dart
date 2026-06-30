@@ -69,8 +69,7 @@ Future<void> guardarLecturaFirebase() async {
     if (ultimaLecturaGuardada != null &&
         DateTime.now()
                 .difference(ultimaLecturaGuardada!)
-                .inSeconds <
-            30) {
+                .inSeconds < 15) {
       return;
     }
 
@@ -97,9 +96,9 @@ Future<void> guardarLecturaFirebase() async {
       'timestamp': FieldValue.serverTimestamp(),
     });
 
-    print("✅ Lectura guardada en Firebase");
+    debugPrint("✅ Lectura guardada en Firebase");
   } catch (e) {
-    print("❌ Error guardando lectura: $e");
+    debugPrint("❌ Error guardando lectura: $e");
   }
 }
 
@@ -129,13 +128,13 @@ Future<void> _cargarNombrePaciente() async {
             pacienteId = doc.id;
             fotoUrl = data['fotoUrl'] ?? '';
           });
-           print("Paciente encontrado: $pacienteId");
+           debugPrint("Paciente encontrado: $pacienteId");
           return;
         }
       }
     }
   } catch (e) {
-    print('Error cargando nombre del paciente: $e');
+    debugPrint('Error cargando nombre del paciente: $e');
   }
 }
 
@@ -144,9 +143,12 @@ Future<void> _cargarNombrePaciente() async {
     if (data == null || data is! Map) return;
 
     try {
-      axActual = double.tryParse(data['ax']?.toString() ?? "0") ?? 0;
-      ayActual = double.tryParse(data['ay']?.toString() ?? "0") ?? 0;
-      azActual = double.tryParse(data['az']?.toString() ?? "0") ?? 0;
+
+    debugPrint("📨 MQTT recibido: $data");
+
+    axActual = double.tryParse(data['ax']?.toString() ?? "0") ?? 0;
+    ayActual = double.tryParse(data['ay']?.toString() ?? "0") ?? 0;
+    azActual = double.tryParse(data['az']?.toString() ?? "0") ?? 0;
 
       _calcularPostura(axActual, ayActual, azActual);
 
@@ -186,8 +188,9 @@ Future<void> _cargarNombrePaciente() async {
           setState(() => direccion = "Buscando señal GPS...");
         }
       }
+      guardarLecturaFirebase();
     } catch (e) {
-      print("Error parseando JSON MQTT en HomeScreen: $e");
+      debugPrint("Error parseando JSON MQTT en HomeScreen: $e");
     }
   }
 
@@ -222,20 +225,24 @@ Future<void> _cargarNombrePaciente() async {
   }
 
   void _procesarMax30102(int ir, int red, bool isDedo) {
+
     if (!isDedo || ir < 2000) {
+
       _irBuffer.clear();
       _redBuffer.clear();
-      if (dedo != false || pulso != 0) {
-        setState(() {
-          dedo = false;
-          pulso = 0;
-          spo2 = 0;
-        });
-      }
+
+      setState(() {
+        dedo = false;
+      });
+
       return;
     }
 
-    if (!dedo) setState(() => dedo = true);
+    if (!dedo) {
+      setState(() {
+        dedo = true;
+      });
+    }
 
     _irBuffer.add(ir);
     _redBuffer.add(red);
@@ -247,10 +254,10 @@ Future<void> _cargarNombrePaciente() async {
 
     if (_irBuffer.length == 120) {
       _calcularBpmYSpO2();
-      guardarLecturaFirebase();
     }
   }
 
+/////////////////////////////////////////////////////////////////
   void _calcularBpmYSpO2() {
     List<double> irSuavizado = [];
     for (int i = 2; i < _irBuffer.length - 2; i++) {
@@ -281,7 +288,7 @@ Future<void> _cargarNombrePaciente() async {
       }
     }
 
-    print("Latidos detectados: $latidos");
+    debugPrint("Latidos detectados: $latidos");
 
     int estimadoBpm = latidos * 22;
     if (estimadoBpm > 0 && estimadoBpm < 60) {
@@ -439,7 +446,7 @@ Future<void> _cargarNombrePaciente() async {
                       backgroundColor: Colors.grey[300],
                       backgroundImage:
                           fotoUrl.isNotEmpty
-                              ? NetworkImage(fotoUrl)
+                              ? AssetImage('assets/$fotoUrl')
                               : null,
                       child: fotoUrl.isEmpty
                           ? const Icon(
