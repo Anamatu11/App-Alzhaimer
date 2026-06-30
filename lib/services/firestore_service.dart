@@ -41,7 +41,9 @@ class FirestoreService {
 
   // Actualizar nombre del usuario
   Future<void> updateUserName(String uid, String nombre) async {
+    
     try {
+      
       await _firestore.collection('usuarios').doc(uid).update({
         'nombre': nombre,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -65,10 +67,40 @@ class FirestoreService {
 
   // Agregar cuidador
   // Estructura esperada: {'nombre': '...', 'parentesco': '...', 'celular': '...'}
-  Future<void> addCaregiver(String uid, Map<String, String> cuidador) async {
+  Future<void> addCaregiver(
+    String uid,
+    Map<String, dynamic> cuidador,
+  ) async {
     try {
+      final doc =
+          await _firestore.collection('usuarios').doc(uid).get();
+
+      final data = doc.data() as Map<String, dynamic>;
+
+      final cuidadores =
+          List<Map<String, dynamic>>.from(
+        data['cuidadores'] ?? [],
+      );
+
+      // Contar activos
+      final activos = cuidadores.where(
+        (c) => c['estado'] == 'activo',
+      ).length;
+
+      // Si ya existen 3 activos, guardar el nuevo como inactivo
+      final estadoNuevo =
+          activos >= 3 ? 'inactivo' : 'activo';
+
       await _firestore.collection('usuarios').doc(uid).update({
-        'cuidadores': FieldValue.arrayUnion([cuidador]),
+        'cuidadores': FieldValue.arrayUnion([
+          {
+            'nombre': cuidador['nombre'],
+            'parentesco': cuidador['parentesco'],
+            'correo': cuidador['correo'],
+            'celular': cuidador['celular'],
+            'estado': estadoNuevo,
+          }
+        ]),
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
@@ -77,7 +109,7 @@ class FirestoreService {
   }
 
   // Eliminar cuidador
-  Future<void> removeCaregiver(String uid, Map<String, String> cuidador) async {
+  Future<void> removeCaregiver(String uid, Map<String, dynamic> cuidador) async {
     try {
       await _firestore.collection('usuarios').doc(uid).update({
         'cuidadores': FieldValue.arrayRemove([cuidador]),
@@ -87,6 +119,109 @@ class FirestoreService {
       throw Exception('Error eliminando cuidador: $e');
     }
   }
+//
+  Future<void> cambiarEstadoCuidador(
+    String uid,
+    Map<String, dynamic> cuidador,
+  ) async {
+    try {
+      final doc =
+          await _firestore.collection('usuarios').doc(uid).get();
+
+      final data = doc.data() as Map<String, dynamic>;
+
+      final cuidadores =
+          List<Map<String, dynamic>>.from(
+        data['cuidadores'] ?? [],
+      );
+
+      // Contar cuidadores activos
+      final activos = cuidadores.where(
+        (c) => c['estado'] == 'activo',
+      ).length;
+
+      // Si está inactivo y ya existen 3 activos, no permitir activarlo
+      if (cuidador['estado'] == 'inactivo' && activos >= 3) {
+        throw Exception(
+          'Ya existen 3 cuidadores activos.',
+        );
+      }
+
+      final nuevos = cuidadores.map((c) {
+        if (c['correo'] == cuidador['correo']) {
+          return {
+            ...c,
+            'estado':
+                c['estado'] == 'activo'
+                    ? 'inactivo'
+                    : 'activo',
+          };
+        }
+        return c;
+      }).toList();
+
+      await _firestore.collection('usuarios').doc(uid).update({
+        'cuidadores': nuevos,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+////////////////////////////////////////////////////////////////
+    Future<void> updateCaregiver(
+      String uid,
+      Map<String, dynamic> cuidadorAnterior,
+      Map<String, dynamic> cuidadorNuevo,
+    ) async {
+
+      try {
+
+        final doc =
+            await _firestore.collection('usuarios').doc(uid).get();
+
+        final data = doc.data() as Map<String, dynamic>;
+
+        List<Map<String, dynamic>> cuidadores =
+            List<Map<String, dynamic>>.from(
+          data['cuidadores'] ?? [],
+        );
+
+        final index = cuidadores.indexWhere(
+          (c) => c['correo'] == cuidadorAnterior['correo'],
+        );
+
+        if (index == -1) {
+          throw Exception('No se encontró el cuidador.');
+        }
+
+        // Conservamos el estado 
+        cuidadorNuevo['estado'] = cuidadores[index]['estado'];
+
+        cuidadores[index] = cuidadorNuevo;
+        print("ANTES:");
+        print(cuidadores[index]);
+
+        print("DESPUÉS:");
+        print(cuidadorNuevo);
+
+        await _firestore.collection('usuarios').doc(uid).update({
+
+          'cuidadores': cuidadores,
+
+          'updatedAt': FieldValue.serverTimestamp(),
+
+        });
+
+      } catch (e) {
+
+        throw Exception('Error actualizando cuidador: $e');
+
+      }
+
+    }
+
 
   // Stream de datos del usuario (para actualizaciones en tiempo real)
   Stream<DocumentSnapshot<Map<String, dynamic>>> getUserStream(String uid) {

@@ -307,23 +307,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ),
                                   ],
                                 ),
-                                child: CircleAvatar(
-                                  radius: 60,
-                                  backgroundColor: Colors.grey[200],
-                                  backgroundImage: (profileImageUrl != null &&
-                                          profileImageUrl!.isNotEmpty &&
-                                          profileImageUrl!.startsWith('http'))
-                                      ? NetworkImage(profileImageUrl!)
-                                      : const AssetImage(
-                                              'assets/juanperez.jpg')
-                                          as ImageProvider,
-                                  onBackgroundImageError: (exception, stackTrace) {
-                                    // Si falla cargar la imagen, usa la imagen por defecto
-                                    setState(() {
-                                      profileImageUrl = '';
-                                    });
-                                  },
-                                ),
+                               child: CircleAvatar(
+                                radius: 60,
+                                backgroundColor: Colors.grey[200],
+                                backgroundImage: (profileImageUrl != null &&
+                                        profileImageUrl!.isNotEmpty)
+                                    ? AssetImage('assets/$profileImageUrl')
+                                    : null,
+                                child: (profileImageUrl == null ||
+                                        profileImageUrl!.isEmpty)
+                                    ? const Icon(
+                                        Icons.person,
+                                        size: 50,
+                                        color: Colors.grey,
+                                      )
+                                    : null,
+                              ),
                               ),
 
                               // Botón de cámara

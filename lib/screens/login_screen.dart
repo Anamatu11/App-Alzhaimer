@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'home_screen.dart';
+import 'admin_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -60,20 +61,37 @@ class _LoginScreenState extends State<LoginScreen> {
       // Usar el servicio de autenticación seguro
       final result = await _authService.login(email, password);
 
-      if (!mounted) return;
-
       if (result['success']) {
-        // Login exitoso
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const HomeScreen(),
-          ),
-        );
+
+        final adminEmails = [
+          'tulandeana11@gmail.com',
+          'santidaza43@gmail.com',
+        ];
+
+        if (adminEmails.contains(email.toLowerCase())) {
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AdminScreen(),
+            ),
+          );
+
+        } else {
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const HomeScreen(),
+            ),
+          );
+
+        }
+
       } else {
-        // Mostrar mensaje de error seguro
         setState(() {
-          errorMessage = result['message'] ?? "Credenciales inválidas. Verifica tus datos e intenta nuevamente.";
+          errorMessage = result['message'] ??
+              "Credenciales inválidas. Verifica tus datos e intenta nuevamente.";
         });
       }
     } catch (e) {

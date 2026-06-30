@@ -23,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final MapController _mapController = MapController();
   String nombrePaciente = "Paciente";
   String pacienteId = "";
+  String fotoUrl = "";
   DateTime? ultimaLecturaGuardada;
   int _selectedIndex = 0;
 
@@ -126,6 +127,7 @@ Future<void> _cargarNombrePaciente() async {
           setState(() {
             nombrePaciente = data['nombre'] ?? 'Paciente';
             pacienteId = doc.id;
+            fotoUrl = data['fotoUrl'] ?? '';
           });
            print("Paciente encontrado: $pacienteId");
           return;
@@ -435,7 +437,17 @@ Future<void> _cargarNombrePaciente() async {
                     CircleAvatar(
                       radius: 50,
                       backgroundColor: Colors.grey[300],
-                      backgroundImage: const AssetImage('assets/juanperez.jpg'),
+                      backgroundImage:
+                          fotoUrl.isNotEmpty
+                              ? NetworkImage(fotoUrl)
+                              : null,
+                      child: fotoUrl.isEmpty
+                          ? const Icon(
+                              Icons.person,
+                              size: 50,
+                              color: Colors.white,
+                            )
+                          : null,
                     ),
                     const SizedBox(width: 16),
                     Expanded(
