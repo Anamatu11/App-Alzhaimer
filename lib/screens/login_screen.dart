@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart';
 import 'admin_screen.dart';
 
@@ -16,7 +17,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final ScrollController _scrollController = ScrollController();
   final FocusNode _passwordFocusNode = FocusNode();
   final AuthService _authService = AuthService();
-
   String errorMessage = "";
   bool isLoading = false;
   bool hidePassword = true;
@@ -45,8 +45,6 @@ class _LoginScreenState extends State<LoginScreen> {
     _passwordFocusNode.dispose();
     super.dispose();
   }
-
-
 
   Future<void> login() async {
     String email = emailController.text.trim();
@@ -109,7 +107,184 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
+///////////////////////////////////////////////////////
+  Future<void> solicitarRestablecimiento() async {
 
+  final TextEditingController correoController =
+      TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (_) {
+
+      return AlertDialog(
+
+        backgroundColor: Colors.white,
+
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+
+        title: const Text(
+          "Restablecer contraseña",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Color(0xFF1A237E),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+        content: TextField(
+
+          controller: correoController,
+
+          keyboardType: TextInputType.emailAddress,
+
+          decoration: InputDecoration(
+
+            labelText: "Correo electrónico",
+
+            prefixIcon: const Icon(
+              Icons.email_outlined,
+              color: Color(0xFF1A237E),
+            ),
+
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Color(0xFF1A237E),
+              ),
+            ),
+
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+
+          ),
+
+        ),
+
+        actions: [
+
+          TextButton(
+
+            onPressed: (){
+              Navigator.pop(context);
+            },
+
+            child: const Text(
+              "Cancelar",
+              style: TextStyle(
+                color: Color(0xFF1A237E),
+              ),
+            ),
+
+          ),
+
+          ElevatedButton(
+
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1A237E),
+              foregroundColor: Colors.white,
+            ),
+
+            child: const Text("Enviar"),
+
+            onPressed: () async {
+
+              final correo =
+                  correoController.text.trim();
+
+              if(correo.isEmpty){
+
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      "Ingrese un correo electrónico.",
+                    ),
+                  ),
+                );
+
+                return;
+
+              }
+
+              try{
+
+                await _authService
+                    .sendPasswordResetEmail(correo);
+
+                Navigator.pop(context);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      "Revise su correo electrónico para continuar con el proceso de recuperación.",
+                    ),
+                    duration: Duration(seconds: 4),
+                  ),
+                );
+
+              } on FirebaseAuthException catch (e) {
+
+                Navigator.pop(context);
+
+                String mensaje;
+
+                switch (e.code) {
+                  case 'user-not-found':
+                    mensaje = "No existe una cuenta asociada a ese correo.";
+                    break;
+
+                  case 'invalid-email':
+                    mensaje = "El correo electrónico no es válido.";
+                    break;
+
+                  case 'too-many-requests':
+                    mensaje = "Demasiados intentos. Inténtelo nuevamente más tarde.";
+                    break;
+
+                  default:
+                    mensaje = "No fue posible enviar el correo de recuperación.";
+                }
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(mensaje),
+                  ),
+                );
+
+              } catch (e) {
+
+                Navigator.pop(context);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      "Ocurrió un error inesperado.",
+                    ),
+                  ),
+                );
+
+              }
+
+            },
+
+          ),
+
+        ],
+
+      );
+
+    },
+
+  );
+
+}
+
+
+////////////////////////////////////////////////////////////
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -304,6 +479,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: Color(0xFF90A4AE),
                                   fontWeight: FontWeight.w400,
                                 ),
+
                                 prefixIcon: const Padding(
                                   padding: EdgeInsets.only(left: 16, right: 12),
                                   child: Icon(
@@ -389,9 +565,32 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
+                          // restablecer contraseña
+                          const SizedBox(height: 12),
+
+                          Center(
+                            child: TextButton(
+                              onPressed: () {
+                              solicitarRestablecimiento();
+                              },
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: const Size(0, 0),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text(
+                                '¿Olvidaste tu contraseña?',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF1A237E),
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ),
 
                           const SizedBox(height: 32),
-
                           // Botón login
                           SizedBox(
                             width: double.infinity,
@@ -466,7 +665,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Text(
-                    "By Ana Maria Tulande Chantre y Erick Santiago Muñoz Daza\nsoporteaxis@gmail.com",
+                    "By Ana Maria Tulande Chantre y Erick Santiago Muñoz Daza\naxisapp.soporte@gmail.com",
                     textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 10,

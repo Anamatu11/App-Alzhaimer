@@ -222,6 +222,16 @@ class FirestoreService {
 
     }
 
+    // Verificar si existe un usuario con ese correo
+    Future<bool> existeCorreo(String correo) async {
+      final resultado = await _firestore
+          .collection('usuarios')
+          .where('email', isEqualTo: correo)
+          .limit(1)
+          .get();
+
+      return resultado.docs.isNotEmpty;
+    }
 
   // Stream de datos del usuario (para actualizaciones en tiempo real)
   Stream<DocumentSnapshot<Map<String, dynamic>>> getUserStream(String uid) {

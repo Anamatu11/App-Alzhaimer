@@ -66,6 +66,9 @@ class AuthService {
       // Crear documento de usuario si no existe
       await _createUserDocumentIfNotExists(userCredential.user!);
 
+      // Registrar la fecha del último inicio de sesión ("Fecha de acceso")
+      await _actualizarUltimoAcceso(userCredential.user!.uid);
+
       return {
         'success': true,
         'message': null,
@@ -100,6 +103,14 @@ class AuthService {
       };
     }
   }
+/////// restablecer password
+  Future<void> sendPasswordResetEmail(String email) async {
+
+  await _firebaseAuth.sendPasswordResetEmail(
+    email: email.trim(),
+  );
+
+}
 
   /// Maneja las excepciones de Firebase Auth de forma segura
   /// Devuelve mensajes genéricos sin revelar información sensible
@@ -147,6 +158,21 @@ class AuthService {
     } catch (e) {
       // Log interno, pero no detener el login
       print('Error creando documento de usuario: $e');
+    }
+  }
+
+  /// Actualiza el campo "updatedAt" del documento del usuario en Firestore
+  /// cada vez que inicia sesión correctamente. Este es el dato que la
+  /// pantalla de gestión de usuarios muestra como "Fecha de acceso".
+  Future<void> _actualizarUltimoAcceso(String uid) async {
+    try {
+      await _firestore.collection('usuarios').doc(uid).update({
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      // No debe interrumpir el login si esto falla (por ejemplo, si el
+      // documento aún no existe por alguna condición de carrera).
+      print('Error actualizando último acceso: $e');
     }
   }
 

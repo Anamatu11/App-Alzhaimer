@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'usuarios_screen.dart';
 import 'pacientes_screen.dart';
 import 'login_screen.dart';
 import 'lecturas_screen.dart';
+
 
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
@@ -74,6 +76,41 @@ class AdminScreen extends StatelessWidget {
                   ),
                 );
               },
+            ),
+
+             // USUARIOS
+            Card(
+              color: Colors.white,
+              margin: const EdgeInsets.only(bottom: 16),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: ListTile(
+                leading: const Icon(
+                  Icons.manage_accounts,
+                  color: Color(0xFF1A237E),
+                  size: 30,
+                ),
+                title: const Text(
+                  "Usuarios",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: const Text(
+                  "Crear cuentas para cuidadores",
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const UsuariosScreen(),
+                    ),
+                  );
+                },
+              ),
             ),
 
             // ALERTAS
