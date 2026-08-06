@@ -326,41 +326,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
 
                               // Botón de cámara
-                              GestureDetector(
-                                onTap: isUploading ? null : _pickAndUploadImage,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF7C3AED),
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color:
-                                            const Color(0xFF7C3AED)
-                                                .withOpacity(0.4),
-                                        blurRadius: 8,
-                                      ),
-                                    ],
-                                  ),
-                                  padding: const EdgeInsets.all(10),
-                                  child: isUploading
-                                      ? const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                              Colors.white,
-                                            ),
-                                            strokeWidth: 2.5,
-                                          ),
-                                        )
-                                      : const Icon(
-                                          Icons.camera_alt,
-                                          color: Colors.white,
-                                          size: 20,
-                                        ),
-                                ),
-                              ),
+                              
                             ],
                           ),
 
